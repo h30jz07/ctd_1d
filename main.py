@@ -10,13 +10,13 @@ LOCAL_FOODS = "burger,,non-spicy,western\nbanmian,spicy,non-spicy,asian,chinese"
 
 MENU = """ 
 ========================
-I love food!!!
+What can we get you today, sir/madam?
 ------------------------
-1. Try something new!
-2. Pick from my favourites
+1. I'm thinking about trying something new.
+2. I would like to pick from my favorites.
 3. I'm craving...
-4. ANYTHING
-0. QUIT
+4. Recommend me anything.
+0. EXIT
 ========================
 """
 
@@ -25,14 +25,14 @@ class User:
         self.name = name
         self.history = history
         
-    def get_favourites(self):
+    def get_favorites(self):
         if self.history[3] != []:
-            favourite = self.history[3]
+            favorite = self.history[3]
         elif self.history[2] != []:
-            favourite = self.history[2]
+            favorite = self.history[2]
         else:
-            favourite = []
-        return favourite 
+            favorite = []
+        return favorite 
 
     def get_new(self, ls):
         new = []
@@ -69,35 +69,36 @@ def read_database():    #read excel sheet and return in list format
         return add_to_dict(lines)
     
 def try_new(food_dict, user):  #select from list of all foods - less those that have been tried
-    new_food = []
-    for food in set(food_dict.values()):
-        if food not in user.history.values():
-            new_food.add(food)
+    new_food = set()
+    for food_ls in list(food_dict.values()):
+        for food in food_ls:
+            if food not in user.history.values():
+                new_food.add(food)
     random_int = randrange(len(new_food))
-    return new_food[random_int]
+    return list(new_food)[random_int]
 
-def from_favourites(user):  #Select from list of tried and well rated foods
-    return user.get_favourites()
+def from_favorites(user):  #Select from list of tried and well rated foods
+    return user.get_favorites()
 
-def filter_by(food_dict, tag): #given a list of "tags" - spicy, thai, noodles, western, etc. choose from foods with those tags
+def filter_by(food_dict): #given a list of "tags" - spicy, thai, noodles, western, etc. choose from foods with those tags
     running = True
     while running:
-        tag = input("What are you craving today? (Enter 'more' for options)")
+        tag = input("So, what are you craving today?")
         match tag:
             case "more":
-                [print(x) for x in food_dict.headers()]
+                [print(x) for x in food_dict]
 
             case anything:
                 try:
                     filtered = food_dict[anything]
                     running = False
                 except KeyError:
-                   print("We do not have that.")
+                   print("Sorry, we do not have {}.".format(anything))
 
     return filtered
 
 def eat_anything(food_dict): #choose from all foods, less dietary requirements
-    all_food = set(food_dict.values())
+    all_food = list(food_dict.values())
     random_int = randrange(len(all_food))
     return all_food[random_int]
 
@@ -136,26 +137,26 @@ def main():
                 running = False
                 continue
             case "1":
-                print("Try something new")
+                print("Hmm, if you want to try something new,")
                 food = try_new(food_dict, user)
 
             case "2":
-                print("Pick from my favourites")
-                from_favourites(user)
+                print("Ok, let me pick something from your favorites,")
+                food = from_favorites(user)
 
             case "3":
-                print("Filter by choice of cuisine")
-                filter_by(food_dict)
+                print("Enter 'more' for options or you can enter the type of food directly.")
+                food = filter_by(food_dict)
 
             case "4":
                 print("Anything")
-                eat_anything(food_dict)
+                food = eat_anything(food_dict)
 
             case _:
-                print("No such option: ", choice)
+                print("Choice", choice, "is not available, please enter a valid choice.")
                 continue
 
-        print("You should eat {}".format(food))
+        print("You should try {}.".format(food))
             
 
     update_user(user)
