@@ -43,6 +43,17 @@ class User:
 
 #FUNCTIONS
 def display_menu(): #display menu and ask for input
+    print(r"""
+
+ __          ___           _     _                     _  ___  
+ \ \        / / |         | |   | |                   | ||__ \ 
+  \ \  /\  / /| |__   __ _| |_  | |_ ___     ___  __ _| |_  ) |
+   \ \/  \/ / | '_ \ / _` | __| | __/ _ \   / _ \/ _` | __|/ / 
+    \  /\  /  | | | | (_| | |_  | || (_) | |  __/ (_| | |_|_|  
+     \/  \/   |_| |_|\__,_|\__|  \__\___/   \___|\__,_|\__(_)  
+                                                               
+                                                               
+""")
     return input(MENU)
 
 def add_to_dict(lines): #sort foods into a dictionary with tags as keys
