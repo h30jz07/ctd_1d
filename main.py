@@ -1,21 +1,25 @@
 #IMPORTS
-from csv import writer, QUOTE_NONE
-from random import randrange
+from random import choice, sample
+from time import sleep
+import json
 
 
 #GLOBAL VARIABLES
 FOODS_FILE = "food.csv"
-USER_DATA = "user.csv"
-LOCAL_FOODS = "burger,,non-spicy,western\nbanmian,spicy,non-spicy,asian,chinese"
+USER_DATA = "user.json"
+LOCAL_FOODS = """burger,non-spicy,western
+banmian,spicy,non-spicy,asian,chinese
+chicken rice`,non-spicy,chinese"""
 
 MENU = """ 
 ========================
-What can we get you today, sir/madam?
+What can we get you today, {}?
 ------------------------
-1. I'm thinking about trying something new.
-2. I would like to pick from my favorites.
+1. I'm thinking about trying something new
+2. I would like to pick from my favorites
 3. I'm craving...
-4. Recommend me anything.
+4. Recommend me anything
+5. View my food history
 0. EXIT
 ========================
 """
@@ -24,6 +28,24 @@ class User:
     def __init__(self, name, history={1:[], 2:[], 3:[]}):
         self.name = name
         self.history = history
+
+    def __str__(self):
+        placeholder = "nothing yet"
+        rating_1 = ", ".join(self.history[1]) if self.history[1] else placeholder
+        rating_2 = ", ".join(self.history[2]) if self.history[2] else placeholder
+        rating_3 = ", ".join(self.history[3]) if self.history[3] else placeholder
+        string = """
+Profile
+=======
+{}
+
+Ratings
+=======
+meh: {}
+not bad: {}
+it's bussin: {}
+""".format(self.name, rating_1, rating_2, rating_3)
+        return string
         
     def get_favorites(self):
         if self.history[3] != []:
@@ -37,12 +59,18 @@ class User:
     def get_new(self, ls):
         new = []
         for item in ls:
-            if item not in self.tried.values():
+            if item not in self.history.values():
                 new.append(item)
         return new
+    
+    def set_history(self, rating, food):
+        self.history[rating].append(food)
+
+    def to_dict(self):
+        return {"name": self.name, "history": self.history}
 
 #FUNCTIONS
-def display_menu(): #display menu and ask for input
+def display_menu(username): #display menu and ask for input
     print(r"""
 
  __          ___           _     _                     _  ___  
@@ -54,13 +82,13 @@ def display_menu(): #display menu and ask for input
                                                                
                                                                
 """)
-    return input(MENU)
+    return input(MENU.format(username))
 
 def add_to_dict(lines): #sort foods into a dictionary with tags as keys
     dictionary = {}
     for line in lines.splitlines():
         items = line.split(',')
-        for i in range(1, len(items)):
+        for i in range(1, len(items)-1):
             if items[i] in dictionary:
                 dictionary[items[i]].append(items[0])
             else:
@@ -80,21 +108,17 @@ def read_database():    #read excel sheet and return in list format
         return add_to_dict(lines)
     
 def try_new(food_dict, user):  #select from list of all foods - less those that have been tried
-    new_food = set()
-    for food_ls in list(food_dict.values()):
-        for food in food_ls:
-            if food not in user.history.values():
-                new_food.add(food)
-    random_int = randrange(len(new_food))
-    return list(new_food)[random_int]
+    food_ls = set(sum(food_dict.values(), []))
+    new_food = user.get_new(food_ls)
+    return choice(new_food)
 
 def from_favorites(user):  #Select from list of tried and well rated foods
-    return user.get_favorites()
+    return choice(user.get_favorites())
 
 def filter_by(food_dict): #given a list of "tags" - spicy, thai, noodles, western, etc. choose from foods with those tags
     running = True
     while running:
-        tag = input("So, what are you craving today?")
+        tag = input("So, what cuisine are you craving today? ")
         match tag:
             case "more":
                 [print(x) for x in food_dict]
@@ -104,53 +128,71 @@ def filter_by(food_dict): #given a list of "tags" - spicy, thai, noodles, wester
                     filtered = food_dict[anything]
                     running = False
                 except KeyError:
-                   print("Sorry, we do not have {}.".format(anything))
+                   print("Sorry, we do not have {}. How about {}".format(anything, sample(filtered, 3)))
 
-    return filtered
+    
+    return choice(filtered)
 
 def eat_anything(food_dict): #choose from all foods, less dietary requirements
-    all_food = list(food_dict.values())
-    random_int = randrange(len(all_food))
-    return all_food[random_int]
+    all_food = sum(food_dict.values(), [])
+    return choice(all_food)
 
 def init_user():
     try:
-        with open("user.csv") as f:
-            user_data = f.read().splitlines()
-            food_dict = {}
-            for i in range(1,len(user_data)):
-                food_dict[i] = user_data[i]
-            return User(user_data[0], food_dict)
+        with open(USER_DATA) as f:
+            data = json.load(f)
+            d = data["history"]
+            history = {1: d["1"], 2: d["2"], 3: d["3"]}
+            return User(data["name"], history)
 
-    except FileNotFoundError:
+    except (FileNotFoundError, IndexError):
         return User(input("Welcome new user! Please enter your name: "))
 
 def update_user(user):
     try:
-        with open("user.csv", "w", newline="") as f:
-            wr = writer(f, quoting=QUOTE_NONE, escapechar="\\")
-            f.write(user.name+"\n")
-            wr.writerow(user.history[1])
-            wr.writerow(user.history[2])
-            wr.writerow(user.history[3])
+        with open(USER_DATA, "w") as f:
+            f.write(json.dumps(user.to_dict()))
     except KeyError:
         user = User(user.name)
 
+def rate_food():
+    rate_loop = True
+    rating = input("Was the food to your liking? Please rate it from 1-3 stars!: ")
+    while rate_loop:
+        match rating:
+            case "1":
+                rating = 1
+                rate_loop = False
+                break
+            case "2":
+                rating = 2
+                rate_loop = False
+                break
+            case "3":
+                rating = 3
+                rate_loop = False
+                break
+            case _:
+                rating = input("Enter a number from 1 - 3!: ")
+                continue
+    sleep(0.5)
+    return rating
+
 def main():
     running = True
+    user = init_user()
+    food_dict = read_database()
     while running:
-        user = init_user()
-        food_dict = read_database()
-        choice = display_menu()
+        choice = display_menu(user.name)
         match choice:
             case "0":
                 "Exiting. Enjoy your meal!"
                 running = False
-                continue
+                sleep(1)
+                break
             case "1":
                 print("Hmm, if you want to try something new,")
                 food = try_new(food_dict, user)
-
             case "2":
                 print("Ok, let me pick something from your favorites,")
                 food = from_favorites(user)
@@ -163,12 +205,20 @@ def main():
                 print("Anything")
                 food = eat_anything(food_dict)
 
+            case "5":
+                print("Loading your profile")
+                print(user)
+                sleep(1)
+                continue
+
             case _:
                 print("Choice", choice, "is not available, please enter a valid choice.")
+                sleep(0.5)
                 continue
 
         print("You should try {}.".format(food))
-            
+        sleep(1)
+        user.set_history(rate_food(), food)
 
     update_user(user)
     return

@@ -64,8 +64,12 @@ def update_user(user):
         wr.writerow(user.history[3])
         f.close()
 
-user = User("chengyi", {1: ["good"], 2: ["better"], 3: ["best", "nigag"]})
+""" user = User("chengyi", {1: ["good"], 2: ["better"], 3: ["best", "nigag"]})
 update_user(user)
-""" user = init_user()
+user = init_user()
 print(user.name)
 print(user.history) """
+
+f = open("art.csv")
+file = f.read()
+print(file)
