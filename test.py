@@ -1,5 +1,3 @@
-import csv
-
 LOCAL_FOODS = "chicken rice,spicy,non-spicy,asian,chinese\nbanmian,spicy,non-spicy,asian"
 
 def read_database():    #read excel sheet and return in list format
@@ -70,6 +68,4 @@ user = init_user()
 print(user.name)
 print(user.history) """
 
-f = open("art.csv")
-file = f.read()
-print(file)
+print(u"1FAD4")

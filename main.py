@@ -196,7 +196,7 @@ def main():
         choice = display_menu(user.name)
         match choice:
             case "0":
-                "Exiting. Enjoy your meal!"
+                print(Fore.LIGHTYELLOW_EX + "Exiting. Enjoy your meal!")
                 running = False
                 sleep(1)
                 break
@@ -232,7 +232,6 @@ def main():
         user.set_history(rate_food(), food)
 
     update_user(user)
-    return
 
 if __name__ == "__main__":
     main()
