@@ -1,29 +1,28 @@
 #IMPORTS
 from random import choice, sample
 from time import sleep
-import colorama
-from colorama import Fore, Back, Style
+from colorama import Fore
 import json
 
 #GLOBAL VARIABLES
 FOODS_FILE = "food.csv"
 USER_DATA = "user.json"
 LOCAL_FOODS = """burger,non-spicy,western
-banmian,spicy,non-spicy,asian,chinese
-chicken rice`,non-spicy,chinese"""
+banmian,spicy,non,asian,chinese
+chicken rice,non-spicy,chinese"""
 
 MENU = Fore.LIGHTYELLOW_EX + """ 
 ========================
 What can we get you today, {}?
 ------------------------
 1. I'm thinking about trying something new
-2. I would like to pick from my favorites
+2. I would like to pick from my favourites
 3. I'm craving...
 4. Recommend me anything
 5. View my food history
 0. EXIT
 ========================
-"""
+""" + Fore.WHITE
 
 class User:
     def __init__(self, name, history={1:[], 2:[], 3:[]}):
@@ -48,14 +47,14 @@ it's bussin: {}
 """.format(self.name, rating_1, rating_2, rating_3)
         return string
         
-    def get_favorites(self):
+    def get_favourites(self):
         if self.history[3] != []:
-            favorite = self.history[3]
+            favourite = self.history[3]
         elif self.history[2] != []:
-            favorite = self.history[2]
+            favourite = self.history[2]
         else:
-            favorite = []
-        return favorite 
+            favourite = []
+        return favourite 
 
     def get_new(self, ls):
         new = []
@@ -91,7 +90,7 @@ def add_to_dict(lines): #sort foods into a dictionary with tags as keys
     dictionary = {}
     for line in lines.splitlines():
         items = line.split(',')
-        for i in range(1, len(items)-1):
+        for i in range(1, len(items)):
             if items[i] in dictionary:
                 dictionary[items[i]].append(items[0])
             else:
@@ -115,8 +114,12 @@ def try_new(food_dict, user):  #select from list of all foods - less those that 
     new_food = user.get_new(food_ls)
     return choice(new_food)
 
-def from_favorites(user):  #Select from list of tried and well rated foods
-    return choice(user.get_favorites())
+def from_favourites(user):  #Select from list of tried and well rated foods
+    favourites = user.get_favourites()
+    if favourites:
+        return choice(favourites)
+    else:
+        return None
 
 def filter_by(food_dict): #given a list of "tags" - spicy, thai, noodles, western, etc. choose from foods with those tags
     running = True
@@ -201,13 +204,14 @@ def main():
                 print(Fore.YELLOW + "Hmm, if you want to try something new,")
                 food = try_new(food_dict, user)
             case "2":
-                print(Fore.YELLOW + "Ok, let me pick something from your favorites,")
-                food = from_favorites(user)
-
+                print(Fore.YELLOW + "Ok, let me pick something from your favourites,")
+                food = from_favourites(user)
+                if food is None:
+                    print(Fore.RED + "I don't know what you like yet :( Choose a different option")
+                    continue
             case "3":
                 print(Fore.YELLOW + "Enter 'more' for options or you can enter the type of food directly.")
                 food = filter_by(food_dict)
-
             case "4":
                 print(Fore.YELLOW + "Anything")
                 food = eat_anything(food_dict)
