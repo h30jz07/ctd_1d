@@ -64,7 +64,8 @@ it's bussin: {}
         return new
     
     def set_history(self, rating, food):
-        self.history[rating].append(food)
+        if food not in self.history[rating]:
+            self.history[rating].append(food)
 
     def to_dict(self):
         return {"name": self.name, "history": self.history}
