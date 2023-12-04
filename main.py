@@ -1,8 +1,9 @@
 #IMPORTS
 from random import choice, sample
 from time import sleep
+import colorama
+from colorama import Fore, Back, Style
 import json
-
 
 #GLOBAL VARIABLES
 FOODS_FILE = "food.csv"
@@ -11,7 +12,7 @@ LOCAL_FOODS = """burger,non-spicy,western
 banmian,spicy,non-spicy,asian,chinese
 chicken rice`,non-spicy,chinese"""
 
-MENU = """ 
+MENU = Fore.LIGHTYELLOW_EX + """ 
 ========================
 What can we get you today, {}?
 ------------------------
@@ -34,7 +35,7 @@ class User:
         rating_1 = ", ".join(self.history[1]) if self.history[1] else placeholder
         rating_2 = ", ".join(self.history[2]) if self.history[2] else placeholder
         rating_3 = ", ".join(self.history[3]) if self.history[3] else placeholder
-        string = """
+        string = Fore.WHITE + """
 Profile
 =======
 {}
@@ -70,8 +71,8 @@ it's bussin: {}
         return {"name": self.name, "history": self.history}
 
 #FUNCTIONS
-def display_menu(username): #display menu and ask for input
-    print(r"""
+def display_banner():
+    print(Fore.LIGHTYELLOW_EX + r"""
 
  __          ___           _     _                     _  ___  
  \ \        / / |         | |   | |                   | ||__ \ 
@@ -82,6 +83,8 @@ def display_menu(username): #display menu and ask for input
                                                                
                                                                
 """)
+
+def display_menu(username): #display menu and ask for input
     return input(MENU.format(username))
 
 def add_to_dict(lines): #sort foods into a dictionary with tags as keys
@@ -118,17 +121,19 @@ def from_favorites(user):  #Select from list of tried and well rated foods
 def filter_by(food_dict): #given a list of "tags" - spicy, thai, noodles, western, etc. choose from foods with those tags
     running = True
     while running:
-        tag = input("So, what cuisine are you craving today? ")
+        tag = input(Fore.WHITE + "So, what cuisine are you craving today? ")
         match tag:
             case "more":
-                [print(x) for x in food_dict]
+                [print(Fore.YELLOW + x) for x in food_dict]
 
             case anything:
                 try:
                     filtered = food_dict[anything]
                     running = False
                 except KeyError:
-                   print("Sorry, we do not have {}. How about {}".format(anything, sample(filtered, 3)))
+                   tags = sample(sorted(food_dict), 3)
+
+                   print(Fore.RED + "Sorry, we do not have {}. How about {}, {}, or {}".format(anything, tags[0], tags[1], tags[2]))
 
     
     return choice(filtered)
@@ -146,7 +151,7 @@ def init_user():
             return User(data["name"], history)
 
     except (FileNotFoundError, IndexError):
-        return User(input("Welcome new user! Please enter your name: "))
+        return User(input(Fore.WHITE + "Welcome new user! Please enter your name: "))
 
 def update_user(user):
     try:
@@ -157,7 +162,7 @@ def update_user(user):
 
 def rate_food():
     rate_loop = True
-    rating = input("Was the food to your liking? Please rate it from 1-3 stars!: ")
+    rating = input(Fore.WHITE + "Was the food to your liking? Please rate it from 1-3 stars!: ")
     while rate_loop:
         match rating:
             case "1":
@@ -173,6 +178,7 @@ def rate_food():
                 rate_loop = False
                 break
             case _:
+                Fore.RESET
                 rating = input("Enter a number from 1 - 3!: ")
                 continue
     sleep(0.5)
@@ -180,6 +186,7 @@ def rate_food():
 
 def main():
     running = True
+    display_banner()
     user = init_user()
     food_dict = read_database()
     while running:
@@ -191,32 +198,32 @@ def main():
                 sleep(1)
                 break
             case "1":
-                print("Hmm, if you want to try something new,")
+                print(Fore.YELLOW + "Hmm, if you want to try something new,")
                 food = try_new(food_dict, user)
             case "2":
-                print("Ok, let me pick something from your favorites,")
+                print(Fore.YELLOW + "Ok, let me pick something from your favorites,")
                 food = from_favorites(user)
 
             case "3":
-                print("Enter 'more' for options or you can enter the type of food directly.")
+                print(Fore.YELLOW + "Enter 'more' for options or you can enter the type of food directly.")
                 food = filter_by(food_dict)
 
             case "4":
-                print("Anything")
+                print(Fore.YELLOW + "Anything")
                 food = eat_anything(food_dict)
 
             case "5":
-                print("Loading your profile")
+                print(Fore.LIGHTGREEN_EX + "Loading your profile")
                 print(user)
                 sleep(1)
                 continue
 
             case _:
-                print("Choice", choice, "is not available, please enter a valid choice.")
+                print(Fore.RED + "Choice", choice, "is not available, please enter a valid choice.")
                 sleep(0.5)
                 continue
 
-        print("You should try {}.".format(food))
+        print(Fore.LIGHTGREEN_EX + "You should try {}.".format(food))
         sleep(1)
         user.set_history(rate_food(), food)
 
